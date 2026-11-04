@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             YouvideoTheme {
-                YouvideoApp()
+                YouvideoApp(lifecycleOwner = this@MainActivity)
             }
         }
     }
@@ -92,7 +92,7 @@ private enum class Destination(
 }
 
 @Composable
-private fun YouvideoApp() {
+private fun YouvideoApp(lifecycleOwner: LifecycleOwner) {
     val context = LocalContext.current
     var selectedDestination by rememberSaveable { mutableStateOf(Destination.HOME) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -117,6 +117,7 @@ private fun YouvideoApp() {
     if (selectedLocalVideoUri != null) {
         LocalVideoPlayerScreen(
             uri = Uri.parse(selectedLocalVideoUri),
+            lifecycleOwner = lifecycleOwner,
             onClose = { selectedLocalVideoUri = null }
         )
     } else {
@@ -466,10 +467,10 @@ private fun LibraryScreen(onOpenMedia: () -> Unit) {
 @Composable
 private fun LocalVideoPlayerScreen(
     uri: Uri,
+    lifecycleOwner: LifecycleOwner,
     onClose: () -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     var playbackError by remember(uri) { mutableStateOf<String?>(null) }
 
     val player = remember(uri) {
