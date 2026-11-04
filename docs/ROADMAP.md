@@ -1,7 +1,7 @@
 # Youvideo roadmap
 
 ## Product principles
-1. A single, coherent library for content from compatible sources.
+1. A single, coherent library for content from compatible providers.
 2. Clear separation between provider playback and the app's own media player.
 3. Downloads only where the source grants permission.
 4. Low and predictable memory use; the Galaxy A06 is the reference test device.
@@ -17,7 +17,8 @@
 - [x] Initialize Kotlin + Compose application.
 - [x] Establish AMOLED-first design tokens and bottom navigation.
 - [x] Add CI for debug compilation and Android lint.
-- [ ] Verify first GitHub Actions build and install on a physical device.
+- [x] Verify the first GitHub Actions build: unit tests, lint, debug APK assembly, and artifact upload passed.
+- [ ] Install the debug APK and verify it on a physical device.
 
 ### 0.2 — Local media
 - [x] Add a system document picker for user-selected media using the Storage Access Framework.
