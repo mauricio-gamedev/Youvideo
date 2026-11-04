@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -470,6 +471,7 @@ private fun LocalVideoPlayerScreen(
     lifecycleOwner: LifecycleOwner,
     onClose: () -> Unit
 ) {
+    BackHandler(onBack = onClose)
     val context = LocalContext.current
     var playbackError by remember(uri) { mutableStateOf<String?>(null) }
 
