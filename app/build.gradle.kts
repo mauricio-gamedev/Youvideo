@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "io.github.mauriciogamedev.youvideo"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "io.github.mauriciogamedev.youvideo"
