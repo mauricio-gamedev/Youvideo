@@ -555,6 +555,7 @@ private fun LocalVideoPlayerScreen(
             }
         }
 
+        val exoPlayer = player
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
@@ -562,11 +563,11 @@ private fun LocalVideoPlayerScreen(
             factory = { viewContext ->
                 PlayerView(viewContext).apply {
                     useController = true
-                    player = player
+                    this.player = exoPlayer
                 }
             },
             update = { playerView ->
-                playerView.player = player
+                playerView.player = exoPlayer
             }
         )
 
