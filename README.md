@@ -2,7 +2,7 @@
 
 **Youvideo** is an Android-first multimedia hub focused on a clean viewing experience, an organized library, and efficient playback on modest devices.
 
-> Status: early MVP foundation. The current app is a UI and navigation scaffold; provider integrations, playback, and downloads are not implemented yet.
+> Status: early MVP. The app can open and play user-selected local video files. Provider integrations, persistent history, and downloads are not implemented yet.
 
 ## Product direction
 
@@ -37,6 +37,10 @@ The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 ## Development workflow
 
 Read [AGENTS.md](AGENTS.md), [the roadmap](docs/ROADMAP.md), and [the session checkpoint](docs/SESSION_CHECKPOINT.md) before making changes. Application work belongs on a feature branch and should be submitted through a Pull Request.
+
+## Local video playback
+
+The Home and Library screens can open the Android system document picker for a user-selected video. Youvideo retains read access when the provider supports a persistable URI grant and plays the selected file with AndroidX Media3. The player pauses when the app moves to the background and releases its resources when closed. No broad storage permission is requested.
 
 ## Project status
 
