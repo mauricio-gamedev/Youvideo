@@ -38,7 +38,8 @@ Last updated: 2026-11-04
 - CI then failed because API 37 was not available as the stable SDK package; the project was moved to Android API 36.
 - The next CI run reached Gradle and exposed the AGP 9 built-in Kotlin incompatibility with the legacy `org.jetbrains.kotlin.android` plugin.
 - Removed the obsolete Kotlin Android plugin and migrated to AGP built-in Kotlin; removed legacy `kotlinOptions` so Kotlin JVM target follows Java target compatibility.
-- Media3 1.11.1 and Lifecycle 2.11.0 added for local playback.
+- Media3 1.11.1 added for local playback; the player observes the Activity LifecycleOwner already supplied by Activity Compose, avoiding Lifecycle 2.11.0's API 37 compileSdk requirement.
+- Latest player CI run failed at AAR metadata validation because Lifecycle 2.11.0 requires compileSdk 37; that dependency was removed without changing the stable API 36 baseline.
 - CI for the latest player commit is pending/running; do not claim the APK is build-validated until Actions succeeds.
 - No successful APK artifact has been confirmed yet.
 
