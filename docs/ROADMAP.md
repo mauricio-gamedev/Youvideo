@@ -7,6 +7,10 @@
 4. Low and predictable memory use; the Galaxy A06 is the reference test device.
 5. Honest UI states: no fake providers, playback, or download progress.
 
+## SDK baseline
+- Stable Android API 36 (Android 16) is the MVP compile/target baseline.
+- Compose BOM 2026.04.01 is used to stay on the stable Compose 1.11 line, avoiding the Compose 1.12/API 37 preview dependency.
+
 ## MVP sequence
 
 ### 0.1 — Android foundation
