@@ -24,7 +24,7 @@ YouTube support will use official, permitted integration paths. The app will not
 
 ## Build
 
-Open the repository in a recent Android Studio version with Android SDK 37 installed, or use Gradle 9.5.0 with JDK 17:
+Open the repository in a recent Android Studio version with Android SDK 36 installed, or use Gradle 9.5.0 with JDK 17:
 
 ```bash
 gradle assembleDebug
