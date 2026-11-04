@@ -24,14 +24,15 @@ Last updated: 2026-11-04
 - Persistable URI read permission requested when supported by the document provider; no broad storage permission.
 - Player pauses on app background and releases resources when the player screen closes.
 - Android Back action closes the local player screen.
-- User confirmed the debug APK installs and works on the Samsung Galaxy A06.
+- User confirmed the local-player debug APK installs and works on the Samsung Galaxy A06.
 - Provider abstraction with explicit provider IDs/capabilities and a shared media model.
 - PeerTube public search against the configured instance, with result playback via the instance embed player.
+- PeerTube result URLs are restricted to the configured instance host.
 - Internet Archive movie catalog search and result playback via the official Archive.org embedded player.
-- Optional YouTube Data API search connector, gated by a local/Gradle API key. It checks video status and excludes made-for-kids or non-embeddable/unknown-status items before playback.
-- Remote playback screen delegates to source-provided embedded players; YouTube WebView requests include the app Referer identity.
+- Optional YouTube Data API search connector, gated by a local/Gradle API key. It checks video status and excludes made-for-kids, non-embeddable, and unknown-status items before playback.
+- Remote playback delegates to source-provided embedded players; YouTube WebView requests include the app Referer identity.
 - Bounded JSON HTTP client with connect/read timeouts and a response-size ceiling.
-- Unit tests for duration formatting and PeerTube instance URL validation.
+- Unit tests for duration formatting and provider URL validation.
 - GitHub Actions workflow for unit tests, lint, debug APK assembly, and artifact upload.
 - Provider setup and compliance notes in `docs/PROVIDERS.md`.
 
@@ -41,18 +42,19 @@ Last updated: 2026-11-04
 - No provider downloads, including YouTube or Internet Archive.
 - No persistent playback history, favorites, or playlists.
 - No release signing.
-- Live connector search/playback has not yet been verified on the physical Galaxy A06; only the earlier local player build was confirmed by the user.
+- Live connector search/playback has not yet been verified on the physical Galaxy A06; only the earlier local-player build was confirmed by the user.
 
 ## Build and validation history
-- CI previously required fixes for retired SDK packages, Android API 37 availability, AGP 9 built-in Kotlin, and PlayerView/ExoPlayer name resolution.
-- CI run #44 for application commit `430bebc68b9b7f38c78439db87f93256a11bc3c9` passed `testDebugUnitTest`, `lintDebug`, `assembleDebug`, and artifact upload.
-- Debug APK artifact: `youvideo-debug`, artifact ID `13365276407`, 21,133,756 bytes, SHA-256 `21a6a177abac915bccee2a3709a02d07643c389309d9118e34bc7dbbe1a15b38`; it was installed and user-tested on the A06 successfully.
-- Connector implementation is on the current PR branch and must pass a fresh CI run before a new APK is considered ready.
+- CI previously required fixes for retired SDK packages, Android API 37 availability, AGP 9 built-in Kotlin, PlayerView/ExoPlayer name resolution, and Gradle Properties import.
+- CI run #44 passed for the local-player build; the user installed and tested that APK successfully on the Galaxy A06.
+- Connector implementation at commit `5997eeadde2f7edb9954990949ae8380e6dfe8f2` passed CI run #49: `testDebugUnitTest`, `lintDebug`, `assembleDebug`, and artifact upload.
+- Connector debug artifact: `youvideo-debug`, artifact ID `13367081246`, 21,185,250 bytes, SHA-256 `b8aa790e29f3819877ad441c9e763fac35061ccec8a1b451e94d4fe73f5f88c4`; created 2026-11-04 21:52 UTC and expires 2026-11-18 21:52 UTC.
+- The successful CI build confirms compilation and packaging, but it is not yet a physical-device test of connector search/playback.
 - The YouTube API key must never be committed or embedded in a public CI artifact.
 
 ## Next actions
-1. Verify the connector branch with unit tests, lint, and debug assembly in CI.
-2. Install the new connector APK on the A06 and test PeerTube search/playback and Internet Archive search/playback.
+1. Complete the final embedded-player viewport adjustment and verify it in CI.
+2. Install the latest connector APK on the A06 and test PeerTube search/playback and Internet Archive search/playback.
 3. Configure a restricted YouTube Data API key locally and test only eligible embeddable videos.
 4. Add Room-backed history/favorites after connector runtime behavior is stable.
-5. Add user-configurable PeerTube instance selection and source preferences.
+5. Add user-configurable PeerTube instance selection and provider preferences.

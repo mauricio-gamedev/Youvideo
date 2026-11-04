@@ -7,6 +7,7 @@ This guide records the supported provider paths and their boundaries.
 - Search uses the public PeerTube REST endpoint `GET /api/v1/search/videos`.
 - Current default instance: [TILvids](https://tilvids.com), an independent PeerTube instance.
 - Results open the instance's official embedded player using its `embedPath`.
+- Returned embed/source URLs are accepted only when they remain on the configured instance host.
 - This first version does not download videos or attempt to resolve media stream URLs.
 - PeerTube is federated: results depend on the selected instance and its search/federation configuration. The default instance can be replaced in `PeerTubeProvider.DEFAULT_INSTANCE`.
 
@@ -45,7 +46,7 @@ YouTube is optional and disabled until a Data API key is configured.
 
 The app uses YouTube Data API search and then checks each candidate with `videos.list(part=status)`. Only videos with a known `madeForKids=false` status and `embeddable=true` are displayed. Videos with unknown status are excluded conservatively.
 
-Playback is performed by the official YouTube embedded player in Android's WebView. The app supplies its registered app identity through the required Referer header. The app does not extract stream URLs, bypass the official player, block ads, or download YouTube content.
+Playback is performed by the official YouTube embedded player in Android's WebView. The app supplies its registered app identity through the required Referer header. The player viewport enforces a 200dp minimum height on narrow displays. YouTube player controls and attribution remain visible. The app does not extract stream URLs, bypass the official player, block ads, or download YouTube content.
 
 **API-key note:** a key packaged in an Android app can be extracted from the APK. Restrict it in Google Cloud, monitor quota, and do not treat BuildConfig as secret storage. The CI workflow intentionally builds without the YouTube key unless a future secure release process is deliberately configured.
 
