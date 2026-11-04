@@ -2,6 +2,24 @@ package io.github.mauriciogamedev.youvideo
 
 import android.content.Intent
 import android.net.Uri
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import io.github.mauriciogamedev.youvideo.BuildConfig
+import io.github.mauriciogamedev.youvideo.data.provider.DefaultMediaProviders
+import io.github.mauriciogamedev.youvideo.domain.provider.MediaFormatting
+import io.github.mauriciogamedev.youvideo.domain.provider.ProviderId
+import io.github.mauriciogamedev.youvideo.domain.provider.ProviderMedia
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -47,6 +65,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,12 +111,20 @@ private enum class Destination(
     LIBRARY("Biblioteca", Icons.Outlined.Bookmarks)
 }
 
+private enum class ProviderFilter {
+    ALL,
+    PEERTUBE,
+    INTERNET_ARCHIVE,
+    YOUTUBE
+}
+
 @Composable
 private fun YouvideoApp(lifecycleOwner: LifecycleOwner) {
     val context = LocalContext.current
     var selectedDestination by rememberSaveable { mutableStateOf(Destination.HOME) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedLocalVideoUri by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedRemoteMedia by remember { mutableStateOf<ProviderMedia?>(null) }
 
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -115,7 +142,12 @@ private fun YouvideoApp(lifecycleOwner: LifecycleOwner) {
         }
     }
 
-    if (selectedLocalVideoUri != null) {
+    if (selectedRemoteMedia != null) {
+        RemoteVideoPlayerScreen(
+            media = selectedRemoteMedia!!,
+            onClose = { selectedRemoteMedia = null }
+        )
+    } else if (selectedLocalVideoUri != null) {
         LocalVideoPlayerScreen(
             uri = Uri.parse(selectedLocalVideoUri),
             lifecycleOwner = lifecycleOwner,
@@ -159,7 +191,8 @@ private fun YouvideoApp(lifecycleOwner: LifecycleOwner) {
 
                     Destination.EXPLORE -> ExploreScreen(
                         query = searchQuery,
-                        onQueryChange = { searchQuery = it }
+                        onQueryChange = { searchQuery = it },
+                        onOpenMedia = { selectedRemoteMedia = it }
                     )
 
                     Destination.DOWNLOADS -> EmptyFeatureScreen(
@@ -365,13 +398,81 @@ private fun HomeScreen(
 @Composable
 private fun ExploreScreen(
     query: String,
-    onQueryChange: (String) -> Unit
+    onQueryChange: (String) -> Unit,
+    onOpenMedia: (ProviderMedia) -> Unit
 ) {
+    val providers = remember {
+        DefaultMediaProviders.create(BuildConfig.YOUTUBE_API_KEY)
+    }
+    val youtubeConfigured = providers.any { it.id == ProviderId.YOUTUBE }
+
+    var sourceFilter by rememberSaveable { mutableStateOf(ProviderFilter.ALL) }
+    var submittedQuery by rememberSaveable { mutableStateOf("") }
+    var searchVersion by rememberSaveable { mutableStateOf(0) }
+    var results by remember { mutableStateOf<List<ProviderMedia>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var hasSearched by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(searchVersion, sourceFilter) {
+        if (searchVersion == 0) return@LaunchedEffect
+
+        val selectedProviders = providers.filter { provider ->
+            when (sourceFilter) {
+                ProviderFilter.ALL -> true
+                ProviderFilter.PEERTUBE -> provider.id == ProviderId.PEERTUBE
+                ProviderFilter.INTERNET_ARCHIVE -> provider.id == ProviderId.INTERNET_ARCHIVE
+                ProviderFilter.YOUTUBE -> provider.id == ProviderId.YOUTUBE
+            }
+        }
+
+        if (selectedProviders.isEmpty()) {
+            results = emptyList()
+            hasSearched = true
+            errorMessage = if (sourceFilter == ProviderFilter.YOUTUBE && !youtubeConfigured) {
+                "O conector do YouTube precisa de uma chave oficial da YouTube Data API."
+            } else {
+                "Nenhuma fonte está disponível para este filtro."
+            }
+            return@LaunchedEffect
+        }
+
+        isLoading = true
+        hasSearched = true
+        errorMessage = null
+
+        val attempts = coroutineScope {
+            selectedProviders.map { provider ->
+                async {
+                    provider to runCatching {
+                        provider.search(submittedQuery, limit = 12)
+                    }
+                }
+            }.awaitAll()
+        }
+
+        results = attempts
+            .flatMap { attempt -> attempt.second.getOrDefault(emptyList()) }
+            .distinctBy { it.stableKey }
+
+        val failures = attempts.mapNotNull { it.second.exceptionOrNull()?.localizedMessage }
+        errorMessage = when {
+            results.isNotEmpty() && failures.isNotEmpty() ->
+                "Algumas fontes não responderam. Os resultados disponíveis foram mantidos."
+            results.isEmpty() && failures.isNotEmpty() ->
+                failures.first()
+            results.isEmpty() ->
+                "Nenhum resultado encontrado nessas fontes. Tente outra busca."
+            else -> null
+        }
+        isLoading = false
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
             text = "Explorar",
@@ -380,10 +481,11 @@ private fun ExploreScreen(
             color = Color.White
         )
         Text(
-            text = "Pesquise e descubra conteúdos de provedores compatíveis.",
+            text = "Busque em fontes abertas e reproduza pelo player de cada serviço.",
             color = Color(0xFF9EA9BB),
             style = MaterialTheme.typography.bodyMedium
         )
+
         OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
@@ -396,13 +498,256 @@ private fun ExploreScreen(
                     contentDescription = null
                 )
             },
-            placeholder = { Text("Buscar vídeos ou canais") }
+            placeholder = { Text("Buscar vídeos, filmes ou aulas") }
         )
-        EmptyStateCard(
-            icon = Icons.Outlined.Search,
-            title = "Fontes ainda não conectadas",
-            description = "A busca será ativada quando os primeiros conectores autorizados forem implementados."
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = sourceFilter == ProviderFilter.ALL,
+                onClick = { sourceFilter = ProviderFilter.ALL },
+                label = { Text("Todas") }
+            )
+            FilterChip(
+                selected = sourceFilter == ProviderFilter.PEERTUBE,
+                onClick = { sourceFilter = ProviderFilter.PEERTUBE },
+                label = { Text("PeerTube") }
+            )
+            FilterChip(
+                selected = sourceFilter == ProviderFilter.INTERNET_ARCHIVE,
+                onClick = { sourceFilter = ProviderFilter.INTERNET_ARCHIVE },
+                label = { Text("Internet Archive") }
+            )
+            FilterChip(
+                selected = sourceFilter == ProviderFilter.YOUTUBE,
+                onClick = { sourceFilter = ProviderFilter.YOUTUBE },
+                label = { Text("YouTube") }
+            )
+        }
+
+        Button(
+            onClick = {
+                submittedQuery = query.trim()
+                searchVersion += 1
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = query.trim().length >= 2 && !isLoading
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Color(0xFF07152F),
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(10.dp))
+            } else {
+                Icon(Icons.Outlined.Search, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(if (isLoading) "Buscando..." else "Buscar")
+        }
+
+        if (!youtubeConfigured) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF17233A)),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "YouTube: configuração pendente",
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "O conector oficial será ativado quando YOUTUBE_API_KEY estiver configurada. A reprodução usa o player incorporado do YouTube.",
+                        color = Color(0xFFC5D2E9),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        }
+
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage.orEmpty(),
+                color = if (results.isEmpty()) MaterialTheme.colorScheme.error else Color(0xFFB8C7E3),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
+        ) {
+            if (results.isEmpty() && !isLoading) {
+                item {
+                    EmptyStateCard(
+                        icon = Icons.Outlined.Search,
+                        title = if (hasSearched) "Nenhum conteúdo disponível" else "Pronto para explorar",
+                        description = if (hasSearched) {
+                            errorMessage ?: "Tente novamente com outros termos."
+                        } else {
+                            "Digite pelo menos dois caracteres e escolha as fontes que deseja pesquisar."
+                        }
+                    )
+                }
+            }
+
+            items(results, key = { it.stableKey }) { media ->
+                Card(
+                    onClick = { onOpenMedia(media) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF111923))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        Text(
+                            text = media.providerName,
+                            color = Color(0xFF9DBAFF),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = media.title,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!media.creator.isNullOrBlank()) {
+                            Text(
+                                text = media.creator,
+                                color = Color(0xFF98A3B4),
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        val duration = MediaFormatting.durationLabel(media.durationSeconds)
+                        if (duration.isNotBlank()) {
+                            Text(
+                                text = duration,
+                                color = Color(0xFF7F8DA3),
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RemoteVideoPlayerScreen(
+    media: ProviderMedia,
+    onClose: () -> Unit
+) {
+    BackHandler(onBack = onClose)
+    val context = LocalContext.current
+    val webView = remember(media.playbackUrl) {
+        WebView(context).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = true
+            settings.allowFileAccess = false
+            settings.allowContentAccess = false
+            settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            webViewClient = WebViewClient()
+            webChromeClient = WebChromeClient()
+        }
+    }
+
+    DisposableEffect(webView, media.playbackUrl) {
+        if (media.providerId == ProviderId.YOUTUBE) {
+            // YouTube requires the app identity in the WebView Referer header.
+            webView.loadUrl(
+                media.playbackUrl,
+                mapOf("Referer" to "https://io.github.mauriciogamedev.youvideo")
+            )
+        } else {
+            webView.loadUrl(media.playbackUrl)
+        }
+        onDispose {
+            webView.stopLoading()
+            webView.loadUrl("about:blank")
+            webView.removeAllViews()
+            webView.destroy()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Outlined.ArrowBack,
+                    contentDescription = "Voltar",
+                    tint = Color.White
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = media.providerName,
+                    color = Color(0xFF9DBAFF),
+                    style = MaterialTheme.typography.labelMedium
+                )
+                Text(
+                    text = media.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(16f / 9f),
+            factory = { webView }
         )
+
+        Text(
+            text = "Reprodução pelo player incorporado da fonte. Os controles e a atribuição do serviço são mantidos.",
+            color = Color(0xFF98A3B4),
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        Button(
+            onClick = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(media.sourceUrl))
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Abrir na fonte original")
+        }
     }
 }
 

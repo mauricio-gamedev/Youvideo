@@ -9,7 +9,7 @@
 
 ## SDK baseline
 - Stable Android API 36 (Android 16) is the MVP compile/target baseline.
-- Compose BOM 2026.04.01 is used to stay on the stable Compose 1.11 line, avoiding the Compose 1.12/API 37 preview dependency.
+- Compose BOM 2026.04.01 is used to stay on the stable Compose 1.11 line.
 
 ## MVP sequence
 
@@ -17,34 +17,36 @@
 - [x] Initialize Kotlin + Compose application.
 - [x] Establish AMOLED-first design tokens and bottom navigation.
 - [x] Add CI for debug compilation and Android lint.
-- [x] Verify the first GitHub Actions build: unit tests, lint, debug APK assembly, and artifact upload passed.
-- [ ] Install the debug APK and verify it on a physical device.
+- [x] Verify GitHub Actions tests, lint, debug APK assembly, and artifact upload.
+- [x] Install and test the local-player build on the Galaxy A06 (user-confirmed).
 
 ### 0.2 — Local media
 - [x] Add a system document picker for user-selected media using the Storage Access Framework.
 - [x] Build a Media3-based local player with built-in playback controls.
 - [x] Pause playback when the app moves to the background and release the player when the screen closes.
-- [ ] Add tests around media-source and playback-state handling.
+- [ ] Add focused regression tests for local media lifecycle handling.
 
-### 0.3 — Library and persistence
+### 0.3 — Provider connectors
+- [x] Define a provider interface, capability model, and shared media model.
+- [x] Add PeerTube catalog search and embedded playback.
+- [x] Add Internet Archive movie search and embedded playback.
+- [x] Add an optional YouTube Data API connector with video-status eligibility checks and official embedded playback.
+- [ ] Validate live connector search and embedded playback on the Galaxy A06.
+- [ ] Add user-configurable PeerTube instance and provider preferences.
+
+### 0.4 — Library and persistence
 - [ ] Add Room entities/DAO for history and favorites.
 - [ ] Add DataStore for app preferences.
 - [ ] Add bounded thumbnail caching and paging where appropriate.
 
-### 0.4 — Authorized sources
-- [ ] Define a provider interface and capability model.
-- [ ] Integrate sources only through documented and permitted methods.
-- [ ] Evaluate official YouTube integration constraints before implementation.
-- [ ] Show provider-specific limitations clearly.
-
 ### 0.5 — Authorized downloads
-- [ ] Define a download-source contract that requires download permission.
-- [ ] Add resumable downloads for compatible sources.
+- [ ] Define a download-source contract that requires explicit download permission.
+- [ ] Add resumable downloads only for compatible sources.
 - [ ] Add queue, progress, retry, and storage management.
 - [ ] Test cancellation and process recreation.
 
 ### 0.6 — Device optimization and release
-- [ ] Profile startup, scrolling, playback, and memory use on the Galaxy A06.
+- [ ] Profile startup, scrolling, search, playback, and memory use on the Galaxy A06.
 - [ ] Fix regressions before adding optional features.
 - [ ] Add release signing through GitHub Actions secrets.
 - [ ] Document privacy, data use, permissions, licenses, and release steps.
