@@ -42,5 +42,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
 
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
