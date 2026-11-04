@@ -40,10 +40,10 @@ jobs:
           gradle-version: "9.5.0"
 
       - name: Unit tests
-        run: gradle --no-daemon test
+        run: gradle --no-daemon testDebugUnitTest
 
       - name: Android lint
-        run: gradle --no-daemon lint
+        run: gradle --no-daemon lintDebug
 
       - name: Assemble debug APK
         run: gradle --no-daemon assembleDebug
