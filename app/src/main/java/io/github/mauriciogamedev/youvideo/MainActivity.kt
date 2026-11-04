@@ -497,14 +497,17 @@ private fun LocalVideoPlayerScreen(
     }
 
     DisposableEffect(lifecycleOwner, player) {
+        var resumeWhenStarted = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> player.pause()
+                Lifecycle.Event.ON_STOP -> {
+                    resumeWhenStarted = player.isPlaying
+                    player.pause()
+                }
                 Lifecycle.Event.ON_START -> {
-                    if (player.playbackState != Player.STATE_IDLE &&
-                        player.playbackState != Player.STATE_ENDED
-                    ) {
+                    if (resumeWhenStarted) {
                         player.play()
+                        resumeWhenStarted = false
                     }
                 }
                 else -> Unit
