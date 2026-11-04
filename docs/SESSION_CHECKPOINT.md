@@ -36,7 +36,7 @@ Last updated: 2026-11-04
 - CI workflow is configured, but a successful Actions run must be observed before calling the scaffold build-validated.
 
 ## Next steps
-1. Confirm the GitHub Actions run for this branch succeeds.
+1. Confirm the GitHub Actions run for this branch succeeds with API 36.
 2. Install the debug APK on the Galaxy A06 and check launch, navigation, and memory behavior.
 3. Start the local-media picker and Media3 player as the first genuinely functional media feature.
 4. Add Room/DataStore only alongside the features that need persistence.
