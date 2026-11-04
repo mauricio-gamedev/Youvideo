@@ -17,7 +17,7 @@ YouTube support will use official, permitted integration paths. The app will not
 
 - Kotlin 2.4.21
 - Android Gradle Plugin 9.3.1
-- Jetpack Compose (BOM 2026.08.00)
+- Jetpack Compose (BOM 2026.04.01)
 - Material 3
 - Gradle 9.5.0
 - JDK 17
@@ -27,9 +27,9 @@ YouTube support will use official, permitted integration paths. The app will not
 Open the repository in a recent Android Studio version with Android SDK 36 installed, or use Gradle 9.5.0 with JDK 17:
 
 ```bash
-gradle assembleDebug
-gradle test
-gradle lint
+gradle --no-daemon testDebugUnitTest
+gradle --no-daemon lintDebug
+gradle --no-daemon assembleDebug
 ```
 
 The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
