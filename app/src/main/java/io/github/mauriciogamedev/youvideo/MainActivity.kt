@@ -427,6 +427,7 @@ private fun ExploreScreen(
         }
 
         if (selectedProviders.isEmpty()) {
+            isLoading = false
             results = emptyList()
             hasSearched = true
             errorMessage = if (sourceFilter == ProviderFilter.YOUTUBE && !youtubeConfigured) {
