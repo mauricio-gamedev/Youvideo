@@ -98,8 +98,19 @@ class PeerTubeProvider(
 
     private fun resolveHttpsUrl(pathOrUrl: String): String? {
         return runCatching {
-            val resolved = URI(baseUrl).resolve(pathOrUrl)
-            if (resolved.scheme.equals("https", ignoreCase = true) && !resolved.host.isNullOrBlank()) {
+            val baseUri = URI(baseUrl)
+            val resolved = baseUri.resolve(pathOrUrl)
+            val basePort = if (baseUri.port == -1) 443 else baseUri.port
+            val resolvedPort = if (resolved.port == -1) 443 else resolved.port
+            val sameInstance = resolved.host.equals(baseUri.host, ignoreCase = true) &&
+                resolvedPort == basePort &&
+                resolved.userInfo == null
+
+            if (
+                resolved.scheme.equals("https", ignoreCase = true) &&
+                !resolved.host.isNullOrBlank() &&
+                sameInstance
+            ) {
                 resolved.toString()
             } else {
                 null
