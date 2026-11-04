@@ -20,9 +20,9 @@
 - [ ] Verify first GitHub Actions build and install on a physical device.
 
 ### 0.2 — Local media
-- [ ] Add a system document picker for user-selected media.
-- [ ] Build a Media3-based local player.
-- [ ] Add lifecycle-safe playback state and basic playback controls.
+- [x] Add a system document picker for user-selected media using the Storage Access Framework.
+- [x] Build a Media3-based local player with built-in playback controls.
+- [x] Pause playback when the app moves to the background and release the player when the screen closes.
 - [ ] Add tests around media-source and playback-state handling.
 
 ### 0.3 — Library and persistence
