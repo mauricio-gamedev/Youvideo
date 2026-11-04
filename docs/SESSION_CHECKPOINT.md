@@ -6,37 +6,45 @@ Last updated: 2026-11-04
 - GitHub: https://github.com/mauricio-gamedev/Youvideo
 - Default branch: `main`
 - Work branch: `feat/android-mvp-foundation`
-- Repository was initially empty. A minimal README bootstrap commit was required to create the first Git reference; all application work is on the feature branch.
+- Pull Request: https://github.com/mauricio-gamedev/Youvideo/pull/1 (draft; not merged)
+- All application changes remain on the feature branch.
 
 ## Product brief
 - Name: Youvideo.
-- Target: Android app, starting with a complete multimedia hub for compatible sources.
+- Target: Android app, starting as a complete multimedia hub for compatible sources.
 - Priority: balanced UX, features, and performance.
-- Visual direction: AMOLED-first dark interface selected as the initial default.
+- Visual direction: AMOLED-first dark interface.
 - Reference device: Samsung Galaxy A06 / entry-level hardware.
 
-## Implemented in this checkpoint
-- Android Gradle project scaffold using Kotlin and Jetpack Compose.
-- Initial dark theme and bottom navigation.
-- Home, Explore, Downloads, and Library placeholder states.
-- GitHub Actions workflow for debug build, unit tests, and lint.
-- Contributor instructions, roadmap, and product constraints.
+## Implemented
+- Kotlin + Jetpack Compose foundation using AGP built-in Kotlin support.
+- AMOLED-first theme and bottom navigation (Home, Explore, Downloads, Library).
+- Android system document picker for user-selected videos through Storage Access Framework.
+- Media3 ExoPlayer local playback with the built-in PlayerView controls.
+- Persistable URI read permission requested when supported by the document provider; no broad storage permission.
+- Player pauses on app background and releases its resources when the player screen closes.
+- GitHub Actions workflow for unit tests, lint, and debug APK assembly.
+- Contributor guidelines, product roadmap, and project documentation.
 
-## Not implemented yet
-- Real provider integrations.
-- YouTube playback integration.
-- Local media picker and Media3 player.
-- Persistent history/favorites.
-- Download manager.
+## Not implemented
+- YouTube/provider integrations.
+- Search against live providers.
+- Persistent playback history, favorites, or playlists.
+- Authorized download manager.
 - Release signing.
 
-## Validation
-- Repository metadata and empty initial state inspected before initialization.
-- Dependency versions checked against current official Android/Kotlin release documentation.
-- CI workflow is configured, but a successful Actions run must be observed before calling the scaffold build-validated.
+## Build and validation history
+- CI initially failed because the Android setup action requested the retired SDK package `tools`; workflow was corrected.
+- CI then failed because API 37 was not available as the stable SDK package; the project was moved to Android API 36.
+- The next CI run reached Gradle and exposed the AGP 9 built-in Kotlin incompatibility with the legacy `org.jetbrains.kotlin.android` plugin.
+- Removed the obsolete Kotlin Android plugin and migrated to AGP built-in Kotlin; removed legacy `kotlinOptions` so Kotlin JVM target follows Java target compatibility.
+- Media3 1.11.1 and Lifecycle 2.11.0 added for local playback.
+- CI for the latest player commit is pending/running; do not claim the APK is build-validated until Actions succeeds.
+- No successful APK artifact has been confirmed yet.
 
-## Next steps
-1. Confirm the GitHub Actions run for this branch succeeds with API 36.
-2. Install the debug APK on the Galaxy A06 and check launch, navigation, and memory behavior.
-3. Start the local-media picker and Media3 player as the first genuinely functional media feature.
-4. Add Room/DataStore only alongside the features that need persistence.
+## Next actions
+1. Verify the latest GitHub Actions run (tests, lint, debug APK).
+2. Fix any compiler or lint failures found in the CI logs.
+3. Install the generated APK on the Galaxy A06 and test local video selection, playback, pause/resume, and closing.
+4. Add Room-backed playback history only after the first device test.
+5. Continue with the provider interface and official YouTube integration research.
